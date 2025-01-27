@@ -9,9 +9,12 @@ struct TopRated: Decodable, Equatable, Sendable {
 }
 
 extension TopRated {
+    
+    static let superLong2 = String(repeating: "overview 2 ", count: 20)
+    
     static let mock = Self(results: [
         Movie(id: 1, title: "One", overview: "overview 1", posterPath: nil, voteAverage: 1),
-        Movie(id: 2, title: "Two", overview: "overview 2", posterPath: nil, voteAverage: 2),
+        Movie(id: 2, title: "Two", overview: superLong2, posterPath: nil, voteAverage: 2),
         Movie(id: 3, title: "Three", overview: "overview 3", posterPath: nil, voteAverage: 3)
     ])
 }
@@ -22,6 +25,11 @@ struct Movie: Decodable, Equatable, Identifiable, Sendable {
     let overview: String
     let posterPath: String?
     let voteAverage: Double
+    
+    var posterURL: URL? {
+        guard let posterPath = posterPath else { return nil }
+        return URL(string: "https://image.tmdb.org/t/p/w185/\(posterPath)")
+    }
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -57,17 +65,21 @@ extension DependencyValues {
 extension MovieClient: DependencyKey {
     static let liveValue = MovieClient(
         topRated: {
-            let host = "https://api.themoviedb.org/3"
             let apiKey: String = "***REMOVED***"
-            let apiKeyQueryItem = URLQueryItem(name: "api_key", value: apiKey)
             
-            var components = URLComponents(string: "https://api.themoviedb.org/3")!
-            components.path = "top_rated"
+            var components = URLComponents()
+            components.scheme = "https"
+            components.host = "api.themoviedb.org"
+            components.path = "/3/movie/top_rated"
             components.queryItems = [
-                apiKeyQueryItem
+                URLQueryItem(name: "api_key", value: apiKey)
             ]
             
-            let (data, _) = try await URLSession.shared.data(from: components.url!)
+            guard let url = components.url else {
+                throw URLError(.badURL)
+            }
+            
+            let (data, _) = try await URLSession.shared.data(from: url)
             return try JSONDecoder().decode(TopRated.self, from: data)
         }
     )
