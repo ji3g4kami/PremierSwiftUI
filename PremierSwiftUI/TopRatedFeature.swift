@@ -6,29 +6,36 @@ import Foundation
 struct TopRatedFeature {
     @ObservableState
     struct State: Equatable {
-        var results: [Movie] = []
+        var movies: IdentifiedArrayOf<Movie> = []
+        var currentPage: Int = 1
         var isLoading = false
     }
     
     enum Action {
-        case loadTopRated
-        case topRatedResponse(TopRated)
+        case onAppear
+        case moviesResponse(Result<TopRated, Error>)
     }
     
     @Dependency(\.movieClient) var movieClient
     
-//    private enum CancelID { case }
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action{
-            case .loadTopRated:
+            case .onAppear:
+                guard state.movies.isEmpty else { return .none }
                 state.isLoading = true
                 return .run { send in
-                    try await send(.topRatedResponse(self.movieClient.topRated()))
+                    let result = await Result { try await movieClient.topRated() }
+                    await send(.moviesResponse(result))
                 }
-            case .topRatedResponse(let topRated):
+                
+            case let .moviesResponse(.success(topRated)):
                 state.isLoading = false
-                state.results = topRated.results
+                state.movies.append(contentsOf: topRated.results)
+                return .none
+                
+            case let .moviesResponse(.failure(_)):
+                state.isLoading = false
                 return .none
             }
         }
