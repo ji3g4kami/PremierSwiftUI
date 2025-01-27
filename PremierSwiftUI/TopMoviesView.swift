@@ -35,16 +35,13 @@ struct MovieRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: columnSpacing) {
             VStack(alignment: .leading, spacing: 10) {
-                AsyncImage(url: movie.posterURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .foregroundColor(.gray.opacity(0.3))
-                }
-                .frame(width: posterSize.width, height: posterSize.height)
-                .cornerRadius(8)
+                CachedAsyncImage(
+                    url: movie.posterURL) {
+                        Rectangle()
+                            .foregroundColor(.gray.opacity(0.3))
+                    }
+                    .frame(width: posterSize.width, height: posterSize.height)
+                    .cornerRadius(8)
                 
                 RatingTagView(rating: movie.voteAverage)
             }
