@@ -9,11 +9,15 @@ struct TopRatedFeature {
         var movies: IdentifiedArrayOf<Movie> = []
         var currentPage: Int = 1
         var isLoading = false
+        var isLoadingNextPage = false
+        var hasMorePages = true
     }
     
     enum Action {
         case onAppear
         case moviesResponse(Result<TopRated, Error>)
+        case loadNextPage
+        case nextPageResponse(Result<TopRated, Error>)
     }
     
     @Dependency(\.movieClient) var movieClient
@@ -25,7 +29,7 @@ struct TopRatedFeature {
                 guard state.movies.isEmpty else { return .none }
                 state.isLoading = true
                 return .run { send in
-                    let result = await Result { try await movieClient.topRated() }
+                    let result = await Result { try await movieClient.topRated(nil) }
                     await send(.moviesResponse(result))
                 }
                 
@@ -36,6 +40,26 @@ struct TopRatedFeature {
                 
             case let .moviesResponse(.failure(_)):
                 state.isLoading = false
+                return .none
+                
+            case .loadNextPage:
+                guard !state.isLoadingNextPage && state.hasMorePages else { return .none }
+                state.isLoadingNextPage = true
+                let nextPage = state.currentPage + 1
+                return .run { send in
+                    let result = await Result { try await movieClient.topRated(page: nextPage) }
+                    await send(.nextPageResponse(result))
+                }
+                
+            case let .nextPageResponse(.success(topRated)):
+                state.isLoadingNextPage = false
+                state.currentPage = topRated.page
+                state.movies.append(contentsOf: topRated.results)
+                state.hasMorePages = topRated.page < topRated.totalPages
+                return .none
+                
+            case .nextPageResponse(.failure):
+                state.isLoadingNextPage = false
                 return .none
             }
         }

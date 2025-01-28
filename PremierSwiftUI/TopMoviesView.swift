@@ -9,11 +9,27 @@ struct TopMoviesView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(store.movies) { movie in
-                            MovieRow(movie: movie)
-                                .background(Color.white)
+                if store.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(store.movies) { movie in
+                                MovieRow(movie: movie)
+                                    .background(Color.white)
+                                    .onAppear {
+                                        if movie.id == store.movies.last?.id {
+                                            store.send(.loadNextPage)
+                                        }
+                                    }
+                            }
+                            
+                            if store.isLoadingNextPage {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            }
                         }
                     }
                 }
