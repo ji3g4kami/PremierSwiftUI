@@ -39,6 +39,7 @@ struct TopMoviesView: View {
         .onAppear {
             store.send(.onAppear)
         }
+        .alert(store: store.scope(state: \.$alert, action: \.alert))
     }
 }
 

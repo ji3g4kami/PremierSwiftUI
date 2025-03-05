@@ -11,6 +11,7 @@ struct TopRatedFeature {
         var isLoading = false
         var isLoadingNextPage = false
         var hasMorePages = true
+        @Presents var alert: AlertState<Action.Alert>?
     }
     
     enum Action {
@@ -18,13 +19,17 @@ struct TopRatedFeature {
         case moviesResponse(Result<TopRated, Error>)
         case loadNextPage
         case nextPageResponse(Result<TopRated, Error>)
+        case alert(PresentationAction<Alert>)
+        enum Alert: Equatable {
+            case dismiss
+        }
     }
     
     @Dependency(\.movieClient) var movieClient
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
-            switch action{
+            switch action {
             case .onAppear:
                 guard state.movies.isEmpty else { return .none }
                 state.isLoading = true
@@ -38,8 +43,17 @@ struct TopRatedFeature {
                 state.movies.append(contentsOf: topRated.results)
                 return .none
                 
-            case let .moviesResponse(.failure(_)):
+            case let .moviesResponse(.failure(error)):
                 state.isLoading = false
+                state.alert = AlertState {
+                    TextState("Error")
+                } actions: {
+                    ButtonState(role: .cancel, action: .send(.none)) {
+                        TextState("OK")
+                    }
+                } message: {
+                    TextState(error.localizedDescription)
+                }
                 return .none
                 
             case .loadNextPage:
@@ -61,7 +75,10 @@ struct TopRatedFeature {
             case .nextPageResponse(.failure):
                 state.isLoadingNextPage = false
                 return .none
+            case .alert(_):
+                return .none
             }
         }
+        .ifLet(\.$alert, action: \.alert)
     }
 }

@@ -41,6 +41,15 @@ struct TopRatedFeatureTests {
         
         await store.receive(\.moviesResponse.failure) {
             $0.isLoading = false
+            $0.alert = AlertState {
+                TextState("Error")
+            } actions: {
+                ButtonState(role: .cancel, action: .send(.none)) {
+                    TextState("OK")
+                }
+            } message: {
+                TextState(error.localizedDescription)
+            }
         }
     }
     
@@ -70,6 +79,58 @@ struct TopRatedFeatureTests {
             $0.currentPage = 2
             $0.movies.append(contentsOf: TopRated.mockPage2.results)
             $0.hasMorePages = false
+        }
+    }
+    
+    @Test("Top rated alert")
+    func topRated_failure_showsAlert() async throws {
+        let error = URLError(.badServerResponse)
+        
+        let store = await TestStore(initialState: TopRatedFeature.State()) {
+            TopRatedFeature()
+        } withDependencies: {
+            $0.movieClient.topRated = { @Sendable _ in throw error }
+        }
+        
+        // When/Then
+        await store.send(.onAppear) {
+            $0.isLoading = true
+        }
+        
+        await store.receive(\.moviesResponse.failure) {
+            $0.isLoading = false
+            $0.alert = AlertState {
+                TextState("Error")
+            } actions: {
+                ButtonState(role: .cancel, action: .send(.none)) {
+                    TextState("OK")
+                }
+            } message: {
+                TextState(error.localizedDescription)
+            }
+        }
+    }
+    
+    @Test("Dismiss alert")
+    func dismissAlert() async throws {
+        let store = await TestStore(
+            initialState: TopRatedFeature.State(
+                alert: AlertState {
+                    TextState("Error")
+                } actions: {
+                    ButtonState(role: .cancel, action: .send(.none)) {
+                        TextState("OK")
+                    }
+                } message: {
+                    TextState("Test error")
+                }
+            )
+        ) {
+            TopRatedFeature()
+        }
+        
+        await store.send(.alert(.dismiss)) {
+            $0.alert = nil
         }
     }
 }
