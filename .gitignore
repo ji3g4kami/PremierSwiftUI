@@ -135,5 +135,11 @@ iOSInjectionProject/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
 
+### Xcode user data ###
+xcuserdata/
+*.xcuserstate
+*.xcscheme
+xcschememanagement.plist
+
 
 # End of https://www.gitignore.io/api/xcode,swift,cocoapods,macOS

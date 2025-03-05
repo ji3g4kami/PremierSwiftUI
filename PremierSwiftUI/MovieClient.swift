@@ -83,7 +83,8 @@ extension DependencyValues {
 extension MovieClient: DependencyKey {
     static let liveValue = MovieClient(
         topRated: { page in
-            let apiKey: String = "***REMOVED***"
+            // Get API key from environment or use a fallback for development
+            let apiKey = ProcessInfo.processInfo.environment["TMDB_API_KEY"] ?? "development_placeholder"
             
             var components = URLComponents()
             components.scheme = "https"
