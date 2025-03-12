@@ -4,7 +4,7 @@ import SwiftUI
 
 struct TopMoviesView: View {
     
-    let store: StoreOf<TopRatedFeature>
+    @Bindable var store: StoreOf<TopRatedFeature>
     
     var body: some View {
         NavigationStack {
@@ -39,7 +39,7 @@ struct TopMoviesView: View {
         .onAppear {
             store.send(.onAppear)
         }
-        .alert(store: store.scope(state: \.$alert, action: \.alert))
+        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
     }
 }
 

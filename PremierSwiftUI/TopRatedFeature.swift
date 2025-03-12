@@ -11,7 +11,7 @@ struct TopRatedFeature {
         var isLoading = false
         var isLoadingNextPage = false
         var hasMorePages = true
-        @Presents var alert: AlertState<Action.Alert>?
+        @Presents var destination: Destination.State?
     }
     
     enum Action {
@@ -19,7 +19,7 @@ struct TopRatedFeature {
         case moviesResponse(Result<TopRated, Error>)
         case loadNextPage
         case nextPageResponse(Result<TopRated, Error>)
-        case alert(PresentationAction<Alert>)
+        case destination(PresentationAction<Destination.Action>)
         enum Alert: Equatable {
             case dismiss
         }
@@ -45,15 +45,18 @@ struct TopRatedFeature {
                 
             case let .moviesResponse(.failure(error)):
                 state.isLoading = false
-                state.alert = AlertState {
-                    TextState("Error")
-                } actions: {
-                    ButtonState(role: .cancel, action: .send(.none)) {
-                        TextState("OK")
+                
+                state.destination = .alert(
+                    AlertState {
+                        TextState("Error")
+                    } actions: {
+                        ButtonState(role: .cancel, action: .send(.none)) {
+                            TextState("OK")
+                        }
+                    } message: {
+                        TextState(error.localizedDescription)
                     }
-                } message: {
-                    TextState(error.localizedDescription)
-                }
+                )
                 return .none
                 
             case .loadNextPage:
@@ -75,10 +78,18 @@ struct TopRatedFeature {
             case .nextPageResponse(.failure):
                 state.isLoadingNextPage = false
                 return .none
-            case .alert(_):
+            case .destination:
                 return .none
             }
         }
-        .ifLet(\.$alert, action: \.alert)
+        .ifLet(\.$destination, action: \.destination)
     }
 }
+
+extension TopRatedFeature {
+    @Reducer
+    enum Destination {
+        case alert(AlertState<TopRatedFeature.Action.Alert>)
+    }
+}
+extension TopRatedFeature.Destination.State: Equatable {}
