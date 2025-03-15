@@ -7,7 +7,7 @@ struct TopMoviesView: View {
     @Bindable var store: StoreOf<TopRatedFeature>
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             VStack(spacing: 0) {
                 if store.isLoading {
                     ProgressView()
@@ -16,13 +16,16 @@ struct TopMoviesView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             ForEach(store.movies) { movie in
-                                MovieRow(movie: movie)
-                                    .background(Color.white)
-                                    .onAppear {
-                                        if movie.id == store.movies.last?.id {
-                                            store.send(.loadNextPage)
+                                NavigationLink(state: MovieDetailFeature.State(movie: movie)) {
+                                    MovieRow(movie: movie)
+                                        .background(Color.white)
+                                        .onAppear {
+                                            if movie.id == store.movies.last?.id {
+                                                store.send(.loadNextPage)
+                                            }
                                         }
-                                    }
+                                }
+                                .buttonStyle(.plain)
                             }
                             
                             if store.isLoadingNextPage {
@@ -35,6 +38,8 @@ struct TopMoviesView: View {
                 }
             }
             .navigationTitle("Top Movies")
+        } destination: { store in
+            MovieDetailView(store: store)
         }
         .onAppear {
             store.send(.onAppear)

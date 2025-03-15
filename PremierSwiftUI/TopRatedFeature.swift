@@ -12,6 +12,7 @@ struct TopRatedFeature {
         var isLoadingNextPage = false
         var hasMorePages = true
         @Presents var destination: Destination.State?
+        var path = StackState<MovieDetailFeature.State>()
     }
     
     enum Action {
@@ -20,6 +21,7 @@ struct TopRatedFeature {
         case loadNextPage
         case nextPageResponse(Result<TopRated, Error>)
         case destination(PresentationAction<Destination.Action>)
+        case path(StackActionOf<MovieDetailFeature>)
         enum Alert: Equatable {
             case dismiss
         }
@@ -78,11 +80,18 @@ struct TopRatedFeature {
             case .nextPageResponse(.failure):
                 state.isLoadingNextPage = false
                 return .none
+                
             case .destination:
+                return .none
+                
+            case .path:
                 return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
+        .forEach(\.path, action: \.path) {
+            MovieDetailFeature()
+        }
     }
 }
 

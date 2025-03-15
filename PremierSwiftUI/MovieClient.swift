@@ -24,16 +24,16 @@ extension TopRated {
         page: 1,
         totalPages: 2,
         results: [
-            Movie(id: 1, title: "One", overview: "overview 1", posterPath: nil, voteAverage: 1),
-            Movie(id: 2, title: "Two", overview: superLong2, posterPath: nil, voteAverage: 2),
-            Movie(id: 3, title: "Three", overview: "overview 3", posterPath: nil, voteAverage: 3)
+            Movie(id: 1, title: "One", overview: "overview 1", posterPath: nil, backdropPath: nil, voteAverage: 1),
+            Movie(id: 2, title: "Two", overview: superLong2, posterPath: nil, backdropPath: nil, voteAverage: 2),
+            Movie(id: 3, title: "Three", overview: "overview 3", posterPath: nil, backdropPath: nil, voteAverage: 3)
         ])
     
     static let mockPage2 = Self(
         page: 2,
         totalPages: 2,
         results: [
-            Movie(id: 4, title: "Four", overview: "overview 4", posterPath: nil, voteAverage: 4)
+            Movie(id: 4, title: "Four", overview: "overview 4", posterPath: nil, backdropPath: nil, voteAverage: 4)
         ])
 }
 
@@ -42,6 +42,7 @@ struct Movie: Decodable, Equatable, Identifiable, Sendable {
     let title: String
     let overview: String
     let posterPath: String?
+    let backdropPath: String?
     let voteAverage: Double
     
     var posterURL: URL? {
@@ -49,11 +50,17 @@ struct Movie: Decodable, Equatable, Identifiable, Sendable {
         return URL(string: "https://image.tmdb.org/t/p/w185/\(posterPath)")
     }
     
+    var backdropURL: URL? {
+        guard let backdropPath = backdropPath else { return nil }
+        return URL(string: "https://image.tmdb.org/t/p/w1280/\(backdropPath)")
+    }
+    
     enum CodingKeys: String, CodingKey {
         case id
         case title
         case overview
         case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
         case voteAverage = "vote_average"
     }
 }
